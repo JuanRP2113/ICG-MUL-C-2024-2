@@ -1,0 +1,1 @@
+ por ultimo W3schools, donde podemos ver y aprender sobre muchisimas cosas, luego repasamos varias cosas de la programacion ayudandonos de metodos que nos reduzcan el tiempo "ayudas" para no demorarnos tanto en la programacion y poder realizar las actividades dispuestas en clase.
