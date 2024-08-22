@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trazado de Figuras</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #container {
+            max-width: 400px;
+            width: 100%;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        #canvas {
+            border: 1px solid black;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Trazado de Figuras</h1>
+        <div class="form-group">
+            <label for="shape">Selecciona una figura:</label>
+            <select id="shape">
+                <option value="circle">Círculo</option>
+                <option value="square">Cuadrado</option>
+                <option value="triangle">Triángulo</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Coordenadas:</label>
+            <input type="radio" id="polar" name="coord" value="polar">
+            <label for="polar">Polar</label>
+            <input type="radio" id="rectangular" name="coord" value="rectangular" checked>
+            <label for="rectangular">Rectangular</label>
+        </div>
+
+        <div class="form-group">
+            <label for="coordX">Coordenada X:</label>
+            <input type="text" id="coordX" placeholder="Ingresa coordenada X">
+        </div>
+
+        <div class="form-group">
+            <label for="coordY">Coordenada Y:</label>
+            <input type="text" id="coordY" placeholder="Ingresa coordenada Y">
+        </div>
+
+        <div class="form-group">
+            <label>Color de relleno:</label>
+            <input type="radio" id="red" name="color" value="red" checked>
+            <label for="red">Rojo</label>
+            <input type="radio" id="blue" name="color" value="blue">
+            <label for="blue">Azul</label>
+        </div>
+
+        <div class="form-group">
+            <label for="dimension">Dimensiones de la figura:</label>
+            <input type="text" id="dimension" placeholder="Ingrese el tamaño (por ejemplo, radio, lado)">
+        </div>
+
+        <button id="drawButton">Dibujar</button>
+        <canvas id="canvas" width="500" height="500"></canvas>
+    </div>
+    <script>
+        const drawButton = document.getElementById('drawButton');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        drawButton.addEventListener('click', () => {
+            const shape = document.getElementById('shape').value;
+            const coordType = document.querySelector('input[name="coord"]:checked').value;
+            let coordX = parseFloat(document.getElementById('coordX').value);
+            let coordY = parseFloat(document.getElementById('coordY').value);
+            const color = document.querySelector('input[name="color"]:checked').value;
+            let dimension = parseFloat(document.getElementById('dimension').value);
+
+            if (isNaN(coordX) || isNaN(coordY) || isNaN(dimension)) {
+                alert("Por favor, ingresa valores numéricos para las coordenadas y las dimensiones.");
+                return;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (coordType === 'polar') {
+                const r = Math.sqrt(coordX ** 2 + coordY ** 2);
+                const theta = Math.atan2(coordY, coordX);
+                coordX = r * Math.cos(theta);
+                coordY = r * Math.sin(theta);
+            }
+
+            ctx.beginPath();
+            if (shape === 'circle') {
+                ctx.arc(coordX, coordY, dimension, 0, Math.PI * 2);
+            } else if (shape === 'square') {
+                ctx.rect(coordX - dimension / 2, coordY - dimension / 2, dimension, dimension);
+            } else if (shape === 'triangle') {
+                ctx.moveTo(coordX, coordY - dimension);
+                ctx.lineTo(coordX - dimension, coordY + dimension);
+                ctx.lineTo(coordX + dimension, coordY + dimension);
+                ctx.closePath();
+            }
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.stroke();
+        });
+    </script>
+</body>
+</html>
