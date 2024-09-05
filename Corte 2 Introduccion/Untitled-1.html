@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Polígonos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px;
+        }
+        canvas {
+            border: 1px solid black;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Generador de Polígonos Regulares</h1>
+    <form id="polygonForm">
+        <label for="nLados">Número de lados (n):</label>
+        <input type="number" id="nLados" name="nLados" min="3" required>
+        <br><br>
+        <label for="apotema">Apotema (a):</label>
+        <input type="number" id="apotema" name="apotema">
+        <br><br>
+        <label for="lado">Lado (L):</label>
+        <input type="number" id="lado" name="lado">
+        <br><br>
+        <label for="color">Color de relleno:</label>
+        <input type="color" id="color" name="color" value="#ff0000">
+        <br><br>
+        <label for="coordType">Tipo de coordenadas del centro:</label>
+        <select id="coordType" name="coordType">
+            <option value="cartesianas">Cartesianas</option>
+            <option value="polares">Polares</option>
+        </select>
+        <br><br>
+        <label for="xCoord">Coordenada X (o radio si es polar):</label>
+        <input type="number" id="xCoord" name="xCoord" required>
+        <br><br>
+        <label for="yCoord">Coordenada Y (o ángulo si es polar):</label>
+        <input type="number" id="yCoord" name="yCoord" required>
+        <br><br>
+        <button type="button" onclick="procesarEntrada()">Dibujar Polígono</button>
+    </form>
+
+    <canvas id="canvas" width="500" height="500"></canvas>
+
+    <script>
+        class Cartesiana {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+            }
+
+            toPolar() {
+                const r = Math.sqrt(this.x * this.x + this.y * this.y);
+                const a = Math.atan2(this.y, this.x);
+                return new Polar(r, a);
+            }
+        }
+
+        class Polar {
+            constructor(r, a) {
+                this.r = r;
+                this.a = a;
+            }
+
+            toCartesian() {
+                const x = this.r * Math.cos(this.a);
+                const y = this.r * Math.sin(this.a);
+                return new Cartesiana(x, y);
+            }
+        }
+
+        function piRad(d) {
+            return d < 1 ? "π/" + Math.PI / d : d / Math.PI + "π";
+        }
+
+        function rot(pxy, ar) {
+            const polar = pxy.toPolar();
+            polar.a += ar;
+            return polar.toCartesian();
+        }
+
+        function polygon(n, L, cx, cy, apotema = false) {
+            const vertices = [];
+            const angle = 2 * Math.PI / n;
+            let r;
+
+            if (apotema) {
+                r = apotema / Math.cos(angle / 2);
+            } else {
+                r = L / (2 * Math.sin(angle / 2));
+            }
+
+            const p = new Cartesiana(cx, cy);
+            const initialVertex = new Cartesiana(p.x + r, p.y);
+
+            for (let i = 0; i < n; i++) {
+                vertices.push(rot(initialVertex, i * angle));
+            }
+            return vertices;
+        }
+
+        function procesarEntrada() {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            const nLados = parseInt(document.getElementById('nLados').value);
+            const apotema = parseFloat(document.getElementById('apotema').value);
+            const lado = parseFloat(document.getElementById('lado').value);
+            const color = document.getElementById('color').value;
+            const coordType = document.getElementById('coordType').value;
+            const cx = obtenerCentroX(coordType);
+            const cy = obtenerCentroY(coordType);
+
+            if (!nLados || (!apotema && !lado)) {
+                alert('Debes ingresar el número de lados y al menos el apotema o el lado');
+                return;
+            }
+
+            const radioPoligono = apotema ? apotema / Math.cos(Math.PI / nLados) : lado / (2 * Math.sin(Math.PI / nLados / 2));
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            dibujarPoligono(ctx, nLados, radioPoligono, cx, cy, color);
+        }
+
+        function obtenerCentroX(coordType) {
+            const xCoord = parseFloat(document.getElementById('xCoord').value);
+            if (coordType === "polares") {
+                const radio = xCoord;
+                const angulo = parseFloat(document.getElementById('yCoord').value) * Math.PI / 180;
+                return radio * Math.cos(angulo) + canvas.width / 2;
+            }
+            return xCoord;
+        }
+
+        function obtenerCentroY(coordType) {
+            const yCoord = parseFloat(document.getElementById('yCoord').value);
+            if (coordType === "polares") {
+                const radio = parseFloat(document.getElementById('xCoord').value);
+                const angulo = yCoord * Math.PI / 180;
+                return radio * Math.sin(angulo) + canvas.height / 2;
+            }
+            return yCoord;
+        }
+
+        function dibujarPoligono(ctx, nLados, radioPoligono, cx, cy, color) {
+            ctx.beginPath();
+
+            const anguloInicial = nLados % 2 === 0 ? Math.PI / nLados : -Math.PI / 2;
+
+            for (let i = 0; i < nLados; i++) {
+                const angulo = 2 * Math.PI * i / nLados + anguloInicial;
+                const x = cx + radioPoligono * Math.cos(angulo);
+                const y = cy + radioPoligono * Math.sin(angulo);
+
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.stroke();
+        }
+    </script>
+</body>
+</html>
